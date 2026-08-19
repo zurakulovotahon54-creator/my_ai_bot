@@ -1,6 +1,2 @@
 aiogram
 google-generativeai
-
-
-TELEGRAM_BOT_TOKEN = "8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA"
-GEMINI_API_KEY = "AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg"
