@@ -7,11 +7,11 @@ from google import genai
 from google.genai import types
 
 TELEGRAM_BOT_TOKEN = "8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA"
-GEMINI_API_KEY = "AQ.Ab8RN6Ldy06t9Rt6G2HZZnwyOKCso4mKqhu_KLL9MtOYrfl0uA"
+GEMINI_API_KEY = "AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg"
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
-ai_client = genai.Client(api_key=GEMINI_API_KEY)
+ai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 MODEL_NAME = "gemini-2.5-flash"
 
