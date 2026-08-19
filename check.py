@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 import google.generativeai as genai
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
@@ -10,9 +9,9 @@ from aiogram.types import Message
 logging.basicConfig(level=logging.INFO)
 
 # ---------------- CONFIGURATION ----------------
-# Укажите ваш Telegram Bot Token и Gemini API Key
-TELEGRAM_BOT_TOKEN = os.getenv("8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA", "ВАШ_ТЕЛЕГРАМ_ТОКЕН")
-GEMINI_API_KEY = os.getenv("AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg", "ВАШ_GEMINI_КЛЮЧ")
+# API ключи прописаны напрямую
+TELEGRAM_BOT_TOKEN = "8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA"
+GEMINI_API_KEY = "AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg"
 
 # Настройка Google Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
