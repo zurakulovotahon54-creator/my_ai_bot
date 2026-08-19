@@ -6,10 +6,13 @@ from aiogram.types import Message
 from google import genai
 from google.genai import types
 import os
+import google.generativeai as genai
 
 TELEGRAM_BOT_TOKEN = "8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA"
 GEMINI_API_KEY = "AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg"
 
+genai.configure(api_key="AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg")
+model = genai.GenerativeModel("gemini-1.5-flash")
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 ai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
