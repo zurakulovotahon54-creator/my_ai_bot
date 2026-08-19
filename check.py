@@ -1,94 +1,86 @@
 import asyncio
 import logging
-from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
-from google import genai
-from google.genai import types
 import os
 import google.generativeai as genai
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import CommandStart
+from aiogram.types import Message
 
-TELEGRAM_BOT_TOKEN = "8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA"
-GEMINI_API_KEY = "AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg"
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 
-genai.configure(api_key="AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg")
-model = genai.GenerativeModel("gemini-1.5-flash")
-bot = Bot(token=TELEGRAM_BOT_TOKEN)
-dp = Dispatcher()
-ai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# ---------------- CONFIGURATION ----------------
+# Укажите ваш Telegram Bot Token и Gemini API Key
+TELEGRAM_BOT_TOKEN = os.getenv("8785345279:AAGqcPwbn5ZU3uHm-qPqjMh4PAG-twwL2CA", "ВАШ_ТЕЛЕГРАМ_ТОКЕН")
+GEMINI_API_KEY = os.getenv("AQ.Ab8RN6Lat8H8wCWnGn8dRd7FNaUqWdYpNd7zFXrPhSv5kQLXNg", "ВАШ_GEMINI_КЛЮЧ")
 
-MODEL_NAME = "gemini-2.5-flash"
+# Настройка Google Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
 
+# Системный промпт Дэдпула
 SYSTEM_INSTRUCTION = (
-    "Ты — Дэдпул (Болтливый Наёмник, Уэйд Уилсон). "
-    "1. Твой стиль: Дерзкий, с сарказмом, чёрным юмором, подколами и иронией. Общайся на 'ты'. "
-    "2. Пробивай 'четвёртую стену': Ты отлично знаешь, что ты — ИИ-бот в Telegram, написанный на Python, "
-    "работаешь через API Gemini и общаешься с пользователем через экран его смартфона или ПК. "
-    "Отсылайся к разработчикам, коду, Telegram, фильмам, комиксам Marvel и гик-культуре. "
-    "3. Детали: Иногда упоминай чимичанги, Росомаху (Логана), свой красненький костюм и то, что ты неуязвим. "
-    "4. Правила речи: Отвечай динамично, живым языком, используй капс для эмоций, но без длинных нудных лекций. "
-    "Если пользователь задает технический или серьезный вопрос — ответь на него, но в своей фирменной шутливой манере."
+    "Ты — Дэдпул (Болтливый Наёмник). Отвечай шутливо, с сарказмом, "
+    "иногда упоминай чимичанги, но при этом давай полезный и точный ответ на вопрос пользователя."
 )
 
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction=SYSTEM_INSTRUCTION
+)
+
+# Инициализация Telegram бота
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
+dp = Dispatcher()
+
+# Хранилище сессий чата для каждого пользователя
 user_chats = {}
 
-
-def create_deadpool_chat():
-    """Создает сессию с высокой температурой для максимум безумия и креатива"""
-    return ai_client.chats.create(
-        model=MODEL_NAME,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            temperature=0.95,  # Выше температура = больше непредсказуемости и юмора
-        ),
-    )
-
+# ---------------- HANDLERS ----------------
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     user_id = message.from_user.id
-    user_chats[user_id] = create_deadpool_chat()
-
+    # Создаём новый чат для пользователя
+    user_chats[user_id] = model.start_chat(history=[])
+    
     await message.answer(
-        f"О-о-о, кого я вижу! {message.from_user.first_name}, ты реально кликнул Start? 🍿\n\n"
-        "Поздравляю, теперь твои текстовые сообщения обрабатывает самый сексуальный наёмник в красном трико. "
-        "Чего надо? Пиши или неси чимичанги!"
+        "Эй! Я Дэдпул. Рад видеть тебя! Задавай свои вопросы, пока я ем чимичангу."
     )
 
-
-@dp.message(Command("clear"))
-async def cmd_clear(message: Message):
-    user_id = message.from_user.id
-    if user_id in user_chats:
-        del user_chats[user_id]
-    await message.answer("Бам! Память стёрта. Как будто мы и не вели этот странный диалог через экраны. С чистого листа! 🧹⚔️")
-
-
 @dp.message(F.text)
-async def handle_deadpool_chat(message: Message):
+async def handle_message(message: Message):
     user_id = message.from_user.id
-
+    
+    # Если у пользователя ещё нет активного чата — создаём
     if user_id not in user_chats:
-        user_chats[user_id] = create_deadpool_chat()
-
-    # Дэдпул «печатает...»
+        user_chats[user_id] = model.start_chat(history=[])
+    
+    chat = user_chats[user_id]
+    
+    # Показываем статус "печатает..." в Telegram
     await bot.send_chat_action(chat_id=message.chat.id, action="typing")
-
+    
     try:
-        chat = user_chats[user_id]
+        # Отправляем сообщение в Gemini
         response = await asyncio.to_thread(chat.send_message, message.text)
-        await message.answer(response.text)
-
+        
+        if response.text:
+            await message.answer(response.text)
+        else:
+            await message.answer("Эй, Gemini промолчал! Попробуй спросить иначе.")
+            
     except Exception as e:
         logging.error(f"Ошибка Gemini API: {e}")
-        await message.answer("Эй, программист! Кажется, сервер Gemini уронил поднос с чимичангами. Попробуй ещё раз через пару секунд!")
+        await message.answer(
+            "Эй, программист! Кажется, сервер Gemini уронил поднос с чимичангами. "
+            "Попробуй ещё раз через пару секунд!"
+        )
 
+# ---------------- MAIN ----------------
 
 async def main():
-    logging.basicConfig(level=logging.INFO)
     print("Болтливый Наёмник запущен в Telegram!")
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
